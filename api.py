@@ -2,8 +2,8 @@ from flask import Flask, request, jsonify
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
 
-from config import AMQP_URI
-from utils import read_qna
+import os
+from qna_provider import QnAProvider
 
 app = Flask(__name__)
 Swagger(app)
@@ -27,9 +27,9 @@ def compute():
     """
     q = request.args.get('q')
     qna_id = request.args.get('qna_id')
-    qna = read_qna(qna_id)
+    qna = QnAProvider(qna_id).get_qna()
     questions = [i['q'] for i in qna]
-    with ClusterRpcProxy({'AMQP_URI': AMQP_URI}) as rpc:
+    with ClusterRpcProxy({'AMQP_URI': os.environ['AMQP_URI']}) as rpc:
         score = rpc.paraphraser.predict(q, questions)
     for i, s in enumerate(score):
         qna[i]['s'] = s[0]
@@ -41,4 +41,5 @@ def compute():
     return jsonify(result), 200
 
 
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=80, debug=True)
