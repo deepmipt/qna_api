@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for
 from flasgger import Swagger
 from nameko.standalone.rpc import ClusterRpcProxy
 
@@ -9,8 +9,13 @@ app = Flask(__name__)
 Swagger(app)
 
 
+@app.route('/')
+def index():
+    return redirect('/apidocs/')
+
+
 @app.route('/answer', methods=['GET'])
-def compute():
+def answer():
     """
     Micro Service Based Compute and Mail API
     This API is made with Flask, Flasgger and Nameko
