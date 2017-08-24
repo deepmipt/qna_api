@@ -37,7 +37,7 @@ def answer():
     with ClusterRpcProxy({'AMQP_URI': os.environ['AMQP_URI']}) as rpc:
         score = rpc.paraphraser.predict(q, questions)
     for i, s in enumerate(score):
-        qna[i]['s'] = s[0]
+        qna[i]['s'] = s
     qna = sorted(qna, key=lambda item: -float(item['s']))
     result = {
         'question': q,

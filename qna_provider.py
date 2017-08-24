@@ -10,15 +10,15 @@ class QnAProvider:
 
     def get_qna(self):
         if self.qna is None:
-
-            spec = importlib.util.spec_from_file_location("config", "/data/config.py")
+            data_path = os.environ['QNA_DATA']
+            spec = importlib.util.spec_from_file_location("config", os.path.join(data_path, "config.py"))
             config = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(config)
 
             result = []
             item = None
             if self.qna_id in config.QnA:
-                with open(os.path.join("/data", config.QnA[self.qna_id]), 'r') as f:
+                with open(os.path.join(data_path, config.QnA[self.qna_id]), 'r') as f:
                     for line in f.readlines():
                         line = line.strip()
                         if line.endswith('?'):
