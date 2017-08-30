@@ -17,8 +17,7 @@ def index():
 @app.route('/answer', methods=['GET'])
 def answer():
     """
-    Micro Service Based Compute and Mail API
-    This API is made with Flask, Flasgger and Nameko
+    Return most similar item to specified question from specified QnA
     ---
     parameters:
       - name: q
@@ -43,6 +42,30 @@ def answer():
         'question': q,
         'answer': qna[0]
     }
+    return jsonify(result), 200
+
+
+@app.route('/questions', methods=['GET'])
+def questions():
+    """
+        Return list of questions from specified QnA
+        ---
+        parameters:
+          - name: qna_id
+            in: query
+            required: true
+            type: string
+        """
+    qna_id = request.args.get('qna_id')
+    qna = QnAProvider(qna_id).get_qna()
+    result = {
+        'qna_id': qna_id,
+        'total': 0,
+        'questions': []
+    }
+    for q in qna:
+        result['questions'].append(q['q'])
+    result['total'] = len(result['questions'])
     return jsonify(result), 200
 
 
