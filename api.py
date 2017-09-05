@@ -57,7 +57,7 @@ def questions():
             type: string
         """
     qna_id = request.args.get('qna_id')
-    qna = QnAProvider(qna_id).get_qna()
+    qna = QnAProvider(qna_id).get_qna(normalize=True)
     result = {
         'qna_id': qna_id,
         'total': 0,
