@@ -1,5 +1,5 @@
 import os
-import importlib.util
+import json
 
 
 class QnAProvider:
@@ -8,29 +8,25 @@ class QnAProvider:
         self.qna = None
         self.qna_id = qna_id
 
-    def get_qna(self):
+    def get_qna(self, normalize=False):
         if self.qna is None:
             data_path = os.environ['QNA_DATA']
-            spec = importlib.util.spec_from_file_location("config", os.path.join(data_path, "config.py"))
-            config = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(config)
+            with open(os.path.join(data_path, "config.json")) as config_file:
+                config = json.load(config_file)
+            if self.qna_id in config["qna"]:
+                with open(os.path.join(data_path, config["qna"][self.qna_id])) as qna_file:
+                    self.qna = json.load(qna_file)
+        return QnAProvider.normalize_qna(self.qna) if normalize else self.qna
 
-            result = []
-            item = None
-            if self.qna_id in config.QnA:
-                with open(os.path.join(data_path, config.QnA[self.qna_id]), 'r') as f:
-                    for line in f.readlines():
-                        line = line.strip()
-                        if line.endswith('?'):
-                            if item is not None:
-                                result.append(item)
-                            item = dict()
-                            item['q'] = line
-                        else:
-                            if 'a' in item:
-                                item['a'] += "\n"+line
-                            else:
-                                item['a'] = line
-                    result.append(item)
-                self.qna = result
-        return self.qna
+    @staticmethod
+    def normalize_qna(qna):
+        result = []
+        for topic in qna["topics"]:
+            for item in topic["qna"]:
+                for q in item["q"]:
+                    for a in item["a"]:
+                        result.append({
+                            "q": q,
+                            "a": a
+                        })
+        return result

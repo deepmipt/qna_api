@@ -31,7 +31,7 @@ def answer():
     """
     q = request.args.get('q')
     qna_id = request.args.get('qna_id')
-    qna = QnAProvider(qna_id).get_qna()
+    qna = QnAProvider(qna_id).get_qna(normalize=True)
     questions = [i['q'] for i in qna]
     with ClusterRpcProxy({'AMQP_URI': os.environ['AMQP_URI']}) as rpc:
         score = rpc.paraphraser.predict(q, questions)
