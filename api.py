@@ -28,19 +28,50 @@ def answer():
         in: query
         required: true
         type: string
+      - name: sort_by
+        in: query
+        required: false
+        type: string
     """
     q = request.args.get('q')
     qna_id = request.args.get('qna_id')
+    sort_by = request.args.get('sort_by')
+    sort_by = "top" if not sort_by else sort_by
     qna = QnAProvider(qna_id).get_qna(normalize=True)
     questions = [i['q'] for i in qna]
     with ClusterRpcProxy({'AMQP_URI': os.environ['AMQP_URI']}) as rpc:
         score = rpc.paraphraser.predict(q, questions)
     for i, s in enumerate(score):
         qna[i]['s'] = s
-    qna = sorted(qna, key=lambda item: -float(item['s']))
+
+    groups = {}
+    for item in qna:
+        print(item)
+        if item["id"] not in groups:
+            groups[item["id"]] = {
+                "answer": item["a"],
+                "top": 0.0,
+                "avg": 0.0,
+                "score": 0.0,
+                "questions": [],
+            }
+        qs = groups[item["id"]]["questions"];
+        qs.append({"q": item["q"], "s": item["s"]})
+
+    for g in groups.items():
+        scores = [q["s"] for q in g[1]["questions"]]
+        g[1]["top"] = max(scores)
+        g[1]["avg"] = sum(scores)/len(scores)
+        g[1]["score"] = g[1]["top"] * g[1]["avg"]
+
+    group_list = sorted([g for g in groups.items()], key=lambda item: -float(item[1][sort_by]))
+
+    print(group_list)
+
+    # qna = sorted(qna, key=lambda item: -float(item['s']))
     result = {
         'question': q,
-        'answer': qna[0]
+        'answers': group_list[:20]
     }
     return jsonify(result), 200
 

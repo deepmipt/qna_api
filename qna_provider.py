@@ -26,6 +26,7 @@ class QnAProvider:
                 for q in item["q"]:
                     for a in item["a"]:
                         result.append({
+                            "id": item["id"],
                             "q": q,
                             "a": a
                         })
